@@ -1,0 +1,5 @@
+﻿{
+  "0": {"name":  "Pickaxe", "repair_cost": 100},
+  "1": {"name":  "Shovel", "repair_cost": 50},
+  "2": {"name":  "Brush", "repair_cost": 25}
+}
