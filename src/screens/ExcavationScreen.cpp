@@ -15,7 +15,6 @@ ExcavationScreen::ExcavationScreen(AppContext context, GameState& state, DBManag
 
     const auto size = context.window->getSize();
 
-    // Sidebar слева
     sidebar_.set_position({0.f, 0.f});
     sidebar_.set_provider([this]{
         BaseStats st{}; st.money = game_state_.player.read_money(); st.satiety = game_state_.player.read_stamina();
@@ -26,7 +25,6 @@ ExcavationScreen::ExcavationScreen(AppContext context, GameState& state, DBManag
             else if(n.find("brush")!=std::string::npos) br=t.read_cur_durability();
         } st.pickaxe=px; st.shovel=sh; st.brush=br; return st; });
 
-    // Заголовки по центру
     title_text_.setFont(Fonts::Main()); title_text_.setFillColor(sf::Color::White);
     title_text_.setCharacterSize(32); title_text_.setString("Excavation");
     Layout::centerTextX(title_text_, *ctx_.window, 20.f);
@@ -35,7 +33,6 @@ ExcavationScreen::ExcavationScreen(AppContext context, GameState& state, DBManag
     info_text_.setCharacterSize(20); info_text_.setString("");
     Layout::centerTextX(info_text_, *ctx_.window, 80.f);
 
-    // Кнопки внутри локации — по центру
     leave_button_.setSize({160.f, 44.f});
     Layout::centerButtonX(leave_button_, *ctx_.window, static_cast<float>(size.y) - 70.f);
     leave_button_.setText("Leave", Fonts::Main(), 20);
@@ -54,13 +51,11 @@ ExcavationScreen::ExcavationScreen(AppContext context, GameState& state, DBManag
         else { roll_new_event(); }
     });
 
-    // Back на базу при выборе локации
     back_to_base_button_.setSize({160.f, 44.f});
     Layout::centerButtonX(back_to_base_button_, *ctx_.window, static_cast<float>(size.y) - 70.f);
     back_to_base_button_.setText("Back", Fonts::Main(), 20);
     back_to_base_button_.setOnClick([this]{ pending_switch_ = ScreenID::Base; });
 
-    // Правый HUD
     right_loc_title_.setFont(Fonts::Main()); right_loc_title_.setFillColor(sf::Color::White); right_loc_title_.setCharacterSize(22);
     right_progress_text_.setFont(Fonts::Main()); right_progress_text_.setFillColor(sf::Color::White); right_progress_text_.setCharacterSize(18);
 
@@ -70,7 +65,6 @@ ExcavationScreen::ExcavationScreen(AppContext context, GameState& state, DBManag
 void ExcavationScreen::build_locations_ui() {
     location_buttons_.clear();
 
-    // Кнопки локаций начинаются чуть ниже info_text_
     float y = Layout::belowTextY(info_text_, 40.f);
     const float button_width = std::max(480.f, static_cast<float>(ctx_.window->getSize().x) * 0.55f);
 
@@ -83,7 +77,7 @@ void ExcavationScreen::build_locations_ui() {
         Layout::centerButtonX(b, *ctx_.window, y);
         std::string label = loc.name + " — enter: " + std::to_string(loc.enter_cost) + "$";
         label += " (Events: " + std::to_string(done) + "/" + std::to_string(total) + ") — ";
-        label += loc.choice_desc; // всё одной строкой
+        label += loc.choice_desc;
         if (done >= total && total > 0) label += " — [Completed]";
         b.setText(label, Fonts::Main(), 18);
         b.setOnClick([this, i]{ enter_location((int)i); });
@@ -101,7 +95,7 @@ void ExcavationScreen::enter_location(int loc_index) {
     if (total > 0 && done >= total) {
         info_text_.setString("Location '" + loc.name + "' is already completed.");
         Layout::centerTextX(info_text_, *ctx_.window, 80.f);
-        return; // Не входим, деньги не списываем
+        return;
     }
 
     const int money = game_state_.player.read_money();
@@ -245,7 +239,7 @@ void ExcavationScreen::refresh_right_hud() {
     right_progress_text_.setString("Events: " + std::to_string(done) + "/" + std::to_string(total));
 
     const auto size = ctx_.window->getSize();
-    const float panel_x = static_cast<float>(size.x) - 320.f + 16.f; // справа отступ
+    const float panel_x = static_cast<float>(size.x) - 320.f + 16.f;
     right_loc_title_.setPosition({panel_x, 16.f});
     right_progress_text_.setPosition({panel_x, 46.f});
 }
