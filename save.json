@@ -1,0 +1,17 @@
+{
+    "collection": [],
+    "event_progress": {},
+    "money": 100,
+    "stamina": 100,
+    "tools": {
+        "0": {
+            "cur_dur": 100
+        },
+        "1": {
+            "cur_dur": 100
+        },
+        "2": {
+            "cur_dur": 100
+        }
+    }
+}
