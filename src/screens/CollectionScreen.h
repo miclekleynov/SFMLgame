@@ -10,20 +10,19 @@
 #include <vector>
 #include <SFML/Graphics.hpp>
 #include "core/Screen.h"
-#include "core/GameState.h"
 #include "core/ScreenManager.h"
+#include "core/GameState.h"
 #include "resources/DBManager.h"
 #include "resources/Fonts.h"
-#include "ui/Sidebar.h"
-#include "ui/UiUtils.h"
 #include "ui/Button.h"
+#include "ui/Sidebar.h"
 
 class CollectionScreen : public Screen {
 public:
     CollectionScreen(AppContext context, GameState& state, DBManager& db_manager);
 
     void handleEvent(const sf::Event& e) override;
-    void update(float) override;
+    void update(float dt) override;
     void draw(sf::RenderTarget& target) override;
 
 private:
@@ -34,15 +33,13 @@ private:
     sf::Text title_text_;
     sf::Text result_text_;
 
-    std::vector<Button> option_buttons_;
-    std::vector<int> visible_artifact_ids_;
+    std::vector<Button> artifact_buttons_;
     Button back_button_;
 
     std::optional<ScreenID> pending_switch_;
 
     void rebuild_buttons();
-    void on_sell_clicked(size_t visual_index);
+    void sell_click(size_t idx);
 };
-
 
 #endif //COLLECTIONSCREEN_H

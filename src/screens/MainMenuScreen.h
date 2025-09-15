@@ -9,20 +9,22 @@
 #include <optional>
 #include <SFML/Graphics.hpp>
 #include "core/Screen.h"
-#include "core/ScreenManager.h"
-#include "ui/Button.h"
+#include "core/ScreenManager.h" // ScreenID
 #include "resources/Fonts.h"
+#include "ui/Button.h"
 
 class MainMenuScreen : public Screen {
 public:
-    MainMenuScreen(AppContext context);
+    explicit MainMenuScreen(AppContext context);
 
     void handleEvent(const sf::Event& e) override;
-    void update(float) override;
+    void update(float dt) override;
     void draw(sf::RenderTarget& target) override;
 
 private:
+    sf::Text title_text_;
     Button play_button_;
+
     std::optional<ScreenID> pending_switch_;
 };
 

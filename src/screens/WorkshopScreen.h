@@ -10,20 +10,19 @@
 #include <vector>
 #include <SFML/Graphics.hpp>
 #include "core/Screen.h"
-#include "core/GameState.h"
 #include "core/ScreenManager.h"
+#include "core/GameState.h"
 #include "resources/DBManager.h"
 #include "resources/Fonts.h"
-#include "ui/Sidebar.h"
-#include "ui/UiUtils.h"
 #include "ui/Button.h"
+#include "ui/Sidebar.h"
 
 class WorkshopScreen : public Screen {
 public:
     WorkshopScreen(AppContext context, GameState& state, DBManager& db_manager);
 
     void handleEvent(const sf::Event& e) override;
-    void update(float) override;
+    void update(float dt) override;
     void draw(sf::RenderTarget& target) override;
 
 private:
@@ -35,13 +34,12 @@ private:
     sf::Text result_text_;
 
     std::vector<Button> option_buttons_;
-    std::vector<int> visible_tool_ids_;
     Button back_button_;
 
     std::optional<ScreenID> pending_switch_;
 
     void rebuild_buttons();
-    void on_repair_clicked(size_t visual_index);
+    void repair_click(size_t idx);
 };
 
 #endif //WORKSHOPSCREEN_H

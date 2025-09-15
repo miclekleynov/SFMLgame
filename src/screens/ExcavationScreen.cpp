@@ -75,10 +75,10 @@ void ExcavationScreen::build_locations_ui() {
         const int total = static_cast<int>(loc.events.size());
         Button b; b.setSize({button_width, 52});
         Layout::centerButtonX(b, *ctx_.window, y);
-        std::string label = loc.name + " — enter: " + std::to_string(loc.enter_cost) + "$";
-        label += " (Events: " + std::to_string(done) + "/" + std::to_string(total) + ") — ";
+        std::string label = loc.name + " | enter: " + std::to_string(loc.enter_cost) + "$";
+        label += " (Events: " + std::to_string(done) + "/" + std::to_string(total) + ") | ";
         label += loc.choice_desc;
-        if (done >= total && total > 0) label += " — [Completed]";
+        if (done >= total && total > 0) label += " [Completed]";
         b.setText(label, Fonts::Main(), 18);
         b.setOnClick([this, i]{ enter_location((int)i); });
         location_buttons_.push_back(b);
@@ -93,6 +93,7 @@ void ExcavationScreen::enter_location(int loc_index) {
     const int done  = db_manager_.get_location_completed_count(loc.name);
     const int total = (int)loc.events.size();
     if (total > 0 && done >= total) {
+        info_text_.setFillColor(sf::Color::White);
         info_text_.setString("Location '" + loc.name + "' is already completed.");
         Layout::centerTextX(info_text_, *ctx_.window, 80.f);
         return;
@@ -100,6 +101,7 @@ void ExcavationScreen::enter_location(int loc_index) {
 
     const int money = game_state_.player.read_money();
     if (money < loc.enter_cost) {
+        info_text_.setFillColor(sf::Color::White);
         info_text_.setString("Not enough money to enter " + loc.name + ". Need " + std::to_string(loc.enter_cost - money) + "$ more.");
         Layout::centerTextX(info_text_, *ctx_.window, 80.f);
         return;
@@ -111,6 +113,7 @@ void ExcavationScreen::enter_location(int loc_index) {
     selected_location_ = loc_index;
     phase_ = Phase::InLocation;
     showing_result_ = false;
+    info_text_.setFillColor(sf::Color::White);
     info_text_.setString(loc.enter_desc);
     Layout::centerTextX(info_text_, *ctx_.window, 80.f);
 
@@ -120,6 +123,7 @@ void ExcavationScreen::enter_location(int loc_index) {
 
 void ExcavationScreen::leave_location() {
     if (selected_location_ >= 0) {
+        info_text_.setFillColor(sf::Color::White);
         info_text_.setString(data_.locations()[selected_location_].exit_desc);
         Layout::centerTextX(info_text_, *ctx_.window, 80.f);
     }
@@ -161,6 +165,7 @@ void ExcavationScreen::build_event_ui() {
     const auto& ev = loc.events.at(current_event_index_);
 
     if (!showing_result_) {
+        info_text_.setFillColor(sf::Color::White);
         info_text_.setString(ev.description);
         Layout::centerTextX(info_text_, *ctx_.window, 80.f);
     }
@@ -193,8 +198,8 @@ void ExcavationScreen::on_choice_clicked(size_t choice_index) {
         Tool& tool = game_state_.inventory.get_tool_by_id(ch.tool_id);
         const int cur_dur = tool.read_cur_durability();
         const int cur_sta = game_state_.player.read_stamina();
-        if (cur_sta < ch.stamina_cost) { info_text_.setString("Not enough stamina."); Layout::centerTextX(info_text_, *ctx_.window, 80.f); showing_result_ = true; continue_button_.setText("Continue", Fonts::Main(), 20); return; }
-        if (cur_dur < ch.durability_cost) { info_text_.setString("Your tool is too worn out."); Layout::centerTextX(info_text_, *ctx_.window, 80.f); showing_result_ = true; continue_button_.setText("Continue", Fonts::Main(), 20); return; }
+        if (cur_sta < ch.stamina_cost) { info_text_.setFillColor(sf::Color::White); info_text_.setString("Not enough stamina."); Layout::centerTextX(info_text_, *ctx_.window, 80.f); showing_result_ = true; continue_button_.setText("Continue", Fonts::Main(), 20); return; }
+        if (cur_dur < ch.durability_cost) { info_text_.setFillColor(sf::Color::White); info_text_.setString("Your tool is too worn out."); Layout::centerTextX(info_text_, *ctx_.window, 80.f); showing_result_ = true; continue_button_.setText("Continue", Fonts::Main(), 20); return; }
 
         game_state_.player.work(ch.stamina_cost);
         tool.use_tool(ch.durability_cost);
@@ -205,12 +210,15 @@ void ExcavationScreen::on_choice_clicked(size_t choice_index) {
             Artifact art = db_manager_.get_artifact_from_id(ch.artifact_id);
             game_state_.collection.add_artifact(art);
             db_manager_.save_collection_data(game_state_.collection);
-            const std::string line = "You found \"" + art.read_name() + "\" — " + art.read_description() +
-                                     " (worth " + std::to_string(art.read_cost()) + "$). Added to collection.";
+            const std::string line = "You found \"" + art.read_name() + "\" | " + art.read_description() +
+                                     " (worth " + std::to_string(art.read_cost()) + "$) added to collection."; // keep your price accessor
+            info_text_.setFillColor(sf::Color(80, 200, 120)); // GREEN for artifact
             info_text_.setString(line);
         } else if (ch.tag == ExChoice::Tag::Again) {
+            info_text_.setFillColor(sf::Color::White);
             info_text_.setString("Try again: " + ch.result_text);
         } else {
+            info_text_.setFillColor(sf::Color::White);
             info_text_.setString("Fail: " + ch.result_text);
         }
         Layout::centerTextX(info_text_, *ctx_.window, 80.f);
@@ -223,6 +231,7 @@ void ExcavationScreen::on_choice_clicked(size_t choice_index) {
         showing_result_ = true;
         continue_button_.setText(done >= total ? "Leave" : "Continue", Fonts::Main(), 20);
     } catch (const std::exception&) {
+        info_text_.setFillColor(sf::Color::White);
         info_text_.setString("Action failed.");
         Layout::centerTextX(info_text_, *ctx_.window, 80.f);
         showing_result_ = true; continue_button_.setText("Continue", Fonts::Main(), 20);

@@ -3,12 +3,10 @@
 //
 
 #include "screens/BankScreen.h"
+#include "ui/Layout.h"
 
 BankScreen::BankScreen(AppContext context, GameState& state, DBManager& db_manager)
     : Screen(context), game_state_(state), db_manager_(db_manager) {
-    const auto size = context.window->getSize();
-    const float cx = size.x * 0.5f;
-
     sidebar_.set_position({0.f, 0.f});
     sidebar_.set_provider([this]{
         BaseStats st{}; st.money = game_state_.player.read_money(); st.satiety = game_state_.player.read_stamina();
@@ -20,41 +18,38 @@ BankScreen::BankScreen(AppContext context, GameState& state, DBManager& db_manag
         } st.pickaxe=px; st.shovel=sh; st.brush=br; return st; });
 
     title_text_.setFont(Fonts::Main()); title_text_.setFillColor(sf::Color::White);
-    title_text_.setCharacterSize(32); title_text_.setString("Bank");
-    title_text_.setPosition(cx, 20.f); center_text_horiz(title_text_, cx);
+    title_text_.setCharacterSize(28); title_text_.setString("Bank");
+    Layout::centerTextX(title_text_, *ctx_.window, 20.f);
 
     result_text_.setFont(Fonts::Main()); result_text_.setFillColor(sf::Color::White);
     result_text_.setCharacterSize(20); result_text_.setString("");
-    result_text_.setPosition(cx, 80.f); center_text_horiz(result_text_, cx);
+    Layout::centerTextX(result_text_, *ctx_.window, 80.f);
 
-    const float left = sidebar_.width() + 100.f; const float button_width = size.x - left - 140.f;
-    const float button_x = left + (size.x - left) * 0.5f - button_width * 0.5f; float y = 160.f;
+    // Простые кредиты (можно заменить логикой из GDD)
+    const int loans[] = {50, 100, 200};
+    float y = Layout::belowTextY(result_text_, 40.f);
+    for (int i=0; i<3; ++i) {
+        Button b; b.setSize({360.f, 56.f});
+        Layout::centerButtonX(b, *ctx_.window, y);
+        b.setText("Take loan: +$" + std::to_string(loans[i]), Fonts::Main(), 20);
+        b.setOnClick([this, amount=loans[i]]{
+            game_state_.player.earn_money(amount);
+            db_manager_.save_player_data(game_state_.player);
+            result_text_.setString("Loan taken: +$" + std::to_string(amount));
+            Layout::centerTextX(result_text_, *ctx_.window, 80.f);
+        });
+        option_buttons_.push_back(b);
+        y += 72.f;
+    }
 
-    loan100_button_.setSize({button_width, 48});
-    loan100_button_.setPosition({button_x, y});
-    loan100_button_.setText("Take a microloan (100$)", Fonts::Main(), 18);
-    loan100_button_.setOnClick([this]{ take_loan(100, "A microloan of $100 has been approved for you"); }); y += 64.f;
-
-    loan1000_button_.setSize({button_width, 48});
-    loan1000_button_.setPosition({button_x, y});
-    loan1000_button_.setText("Take a loan (1000$)", Fonts::Main(), 18);
-    loan1000_button_.setOnClick([this]{ take_loan(1000, "A loan of $1000 has been approved for you"); });
-
-    back_button_.setSize({140.f, 44.f});
-    back_button_.setPosition({size.x - 160.f, size.y - 70.f});
-    back_button_.setText("Back", Fonts::Main(), 20);
+    back_button_.setSize({240.f, 48.f});
+    back_button_.setText("Back to City", Fonts::Main(), 20);
+    Layout::centerButtonX(back_button_, *ctx_.window, static_cast<float>(ctx_.window->getSize().y) - 70.f);
     back_button_.setOnClick([this]{ pending_switch_ = ScreenID::City; });
 }
 
-void BankScreen::take_loan(int amount, const char* phrase) {
-    game_state_.player.earn_money(amount);
-    db_manager_.save_player_data(game_state_.player);
-    result_text_.setString(phrase);
-}
-
 void BankScreen::handleEvent(const sf::Event& e) {
-    loan100_button_.handleEvent(e, *ctx_.window);
-    loan1000_button_.handleEvent(e, *ctx_.window);
+    for (auto& b : option_buttons_) b.handleEvent(e, *ctx_.window);
     back_button_.handleEvent(e, *ctx_.window);
 }
 
@@ -70,7 +65,6 @@ void BankScreen::draw(sf::RenderTarget& target) {
     sidebar_.draw(target);
     target.draw(title_text_);
     target.draw(result_text_);
-    target.draw(loan100_button_);
-    target.draw(loan1000_button_);
+    for (auto& b : option_buttons_) target.draw(b);
     target.draw(back_button_);
 }

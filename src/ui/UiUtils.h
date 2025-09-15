@@ -13,4 +13,5 @@ inline void center_text_horiz(sf::Text& t, float center_x) {
     t.setOrigin(b.left + b.width * 0.5f, 0.f);
     t.setPosition(center_x, t.getPosition().y);
 }
+
 #endif //UIUTILS_H

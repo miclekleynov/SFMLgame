@@ -3,16 +3,21 @@
 //
 
 #include "screens/MainMenuScreen.h"
-#include "core/ScreenManager.h"
-#include "ui/UiUtils.h"
+#include "ui/Layout.h"
 
-MainMenuScreen::MainMenuScreen(AppContext context) : Screen(context) {
-    const auto size = context.window->getSize();
-    const float center_x = size.x * 0.5f;
+MainMenuScreen::MainMenuScreen(AppContext context)
+    : Screen(context) {
+    // Title
+    title_text_.setFont(Fonts::Main());
+    title_text_.setFillColor(sf::Color::White);
+    title_text_.setCharacterSize(32);
+    title_text_.setString("Main Menu");
+    Layout::centerTextX(title_text_, *ctx_.window, 40.f);
 
-    play_button_.setSize({260.f, 64.f});
-    play_button_.setPosition({center_x - 130.f, size.y * 0.5f - 32.f});
-    play_button_.setText("Play", Fonts::Main(), 28);
+    // Play button
+    play_button_.setSize({280.f, 64.f});
+    play_button_.setText("Play", Fonts::Main(), 24);
+    Layout::centerButtonX(play_button_, *ctx_.window, Layout::belowTextY(title_text_, 40.f));
     play_button_.setOnClick([this]{ pending_switch_ = ScreenID::Base; });
 }
 
@@ -29,5 +34,7 @@ void MainMenuScreen::update(float) {
 }
 
 void MainMenuScreen::draw(sf::RenderTarget& target) {
+    target.clear(sf::Color::Black);
+    target.draw(title_text_);
     target.draw(play_button_);
 }

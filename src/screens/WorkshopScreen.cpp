@@ -3,13 +3,11 @@
 //
 
 #include "screens/WorkshopScreen.h"
-#include "game_logic/Tool.h" // complete type
+#include "ui/Layout.h"
+#include "game_logic/Tool.h"
 
 WorkshopScreen::WorkshopScreen(AppContext context, GameState& state, DBManager& db_manager)
     : Screen(context), game_state_(state), db_manager_(db_manager) {
-    const auto size = context.window->getSize();
-    const float cx = size.x * 0.5f;
-
     sidebar_.set_position({0.f, 0.f});
     sidebar_.set_provider([this]{
         BaseStats st{}; st.money = game_state_.player.read_money(); st.satiety = game_state_.player.read_stamina();
@@ -21,16 +19,16 @@ WorkshopScreen::WorkshopScreen(AppContext context, GameState& state, DBManager& 
         } st.pickaxe=px; st.shovel=sh; st.brush=br; return st; });
 
     title_text_.setFont(Fonts::Main()); title_text_.setFillColor(sf::Color::White);
-    title_text_.setCharacterSize(32); title_text_.setString("Workshop");
-    title_text_.setPosition(cx, 20.f); center_text_horiz(title_text_, cx);
+    title_text_.setCharacterSize(28); title_text_.setString("Workshop");
+    Layout::centerTextX(title_text_, *ctx_.window, 20.f);
 
     result_text_.setFont(Fonts::Main()); result_text_.setFillColor(sf::Color::White);
     result_text_.setCharacterSize(20); result_text_.setString("");
-    result_text_.setPosition(cx, 80.f); center_text_horiz(result_text_, cx);
+    Layout::centerTextX(result_text_, *ctx_.window, 80.f);
 
-    back_button_.setSize({140.f, 44.f});
-    back_button_.setPosition({size.x - 160.f, size.y - 70.f});
-    back_button_.setText("Back", Fonts::Main(), 20);
+    back_button_.setSize({240.f, 48.f});
+    back_button_.setText("Back to City", Fonts::Main(), 20);
+    Layout::centerButtonX(back_button_, *ctx_.window, static_cast<float>(ctx_.window->getSize().y) - 70.f);
     back_button_.setOnClick([this]{ pending_switch_ = ScreenID::City; });
 
     rebuild_buttons();
@@ -38,64 +36,52 @@ WorkshopScreen::WorkshopScreen(AppContext context, GameState& state, DBManager& 
 
 void WorkshopScreen::rebuild_buttons() {
     option_buttons_.clear();
-    visible_tool_ids_.clear();
 
-    const auto size = ctx_.window->getSize();
-    const float left = sidebar_.width() + 100.f;
-    const float button_width = size.x - left - 140.f;
-    const float button_x = left + (size.x - left) * 0.5f - button_width * 0.5f;
-    float y = 160.f;
+    float y = Layout::belowTextY(result_text_, 40.f);
+    const float button_width = std::max(440.f, static_cast<float>(ctx_.window->getSize().x) * 0.55f);
 
-    std::vector<Tool> tools = game_state_.inventory.read_tools();
-    for (const auto& t : tools) {
-        if (t.read_cur_durability() >= 100) continue;
-        Button b; b.setSize({button_width, 48}); b.setPosition({button_x, y});
-        const std::string label = "Repair " + t.read_name() +
-            " for " + std::to_string(t.read_repair_cost()) + "$ (" +
-            std::to_string(t.read_cur_durability()) + "%)->(100%)";
+    auto tools = game_state_.inventory.read_tools();
+    for (size_t i=0; i<tools.size(); ++i) {
+        const Tool& t = tools[i];
+        if (t.read_cur_durability() >= 100) continue; // показываем только те, что нуждаются в ремонте
+        Button b; b.setSize({button_width, 48});
+        Layout::centerButtonX(b, *ctx_.window, y);
+        const std::string label = "Repair " + t.read_name() + " (" + std::to_string(t.read_repair_cost()) + "$) (" + std::to_string(t.read_cur_durability()) + "% -> 100%)";
         b.setText(label, Fonts::Main(), 18);
-        const size_t visual_index = visible_tool_ids_.size();
-        b.setOnClick([this, visual_index]{ on_repair_clicked(visual_index); });
+        b.setOnClick([this, i]{ repair_click(i); });
         option_buttons_.push_back(b);
-        visible_tool_ids_.push_back(t.read_id());
         y += 64.f;
     }
 
     if (option_buttons_.empty()) {
-        Button b; b.setSize({button_width, 48}); b.setPosition({button_x, y});
-        b.setText("No tools in need of repair", Fonts::Main(), 18);
-        option_buttons_.push_back(b);
+        result_text_.setString("All tools are at 100%.");
+        Layout::centerTextX(result_text_, *ctx_.window, 80.f);
     }
 }
 
-void WorkshopScreen::on_repair_clicked(size_t visual_index) {
-    if (visual_index >= visible_tool_ids_.size()) return;
-    const int tool_id = visible_tool_ids_[visual_index];
+void WorkshopScreen::repair_click(size_t idx) {
+    auto tools = game_state_.inventory.read_tools();
+    if (idx >= tools.size()) return;
+    Tool& t = game_state_.inventory.get_tool_by_id(tools[idx].read_id());
 
-    try {
-        Tool& tool = game_state_.inventory.get_tool_by_id(tool_id);
-        const int cost = tool.read_repair_cost();
-        const int money = game_state_.player.read_money();
-        if (cost > money) {
-            const int need = cost - money;
-            result_text_.setString("Not enough money for " + tool.read_name() +
-                                   " repairing. You need an additional " + std::to_string(need) + "$");
-            return;
-        }
-        if (tool.read_cur_durability() >= 100) {
-            result_text_.setString("Already at 100%.");
-            return;
-        }
-        game_state_.player.spend_money(cost);
-        tool.repair();
-        db_manager_.save_player_data(game_state_.player);
-        db_manager_.save_tool_data(tool);
-        result_text_.setString("You repaired the " + tool.read_name() + " for " + std::to_string(cost) +
-                               "$, the current durability is 100%.");
-        rebuild_buttons();
-    } catch(...) {
-        // ignore errors
+    const int cost = t.read_repair_cost();
+    const int money = game_state_.player.read_money();
+    if (money < cost) {
+        result_text_.setString("Not enough money to repair " + t.read_name() + ". Need +" + std::to_string(cost - money) + "$.");
+        Layout::centerTextX(result_text_, *ctx_.window, 80.f);
+        return;
     }
+
+    // списываем деньги и чиним
+    game_state_.player.spend_money(cost);
+    t.repair();
+    db_manager_.save_player_data(game_state_.player);
+    db_manager_.save_tool_data(t);
+
+    result_text_.setString("Repaired " + t.read_name() + " to 100% for " + std::to_string(cost) + "$.");
+    Layout::centerTextX(result_text_, *ctx_.window, 80.f);
+
+    rebuild_buttons();
 }
 
 void WorkshopScreen::handleEvent(const sf::Event& e) {

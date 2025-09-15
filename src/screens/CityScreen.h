@@ -9,20 +9,19 @@
 #include <optional>
 #include <SFML/Graphics.hpp>
 #include "core/Screen.h"
-#include "core/GameState.h"
 #include "core/ScreenManager.h"
+#include "core/GameState.h"
 #include "resources/DBManager.h"
 #include "resources/Fonts.h"
-#include "ui/Sidebar.h"
-#include "ui/UiUtils.h"
 #include "ui/Button.h"
+#include "ui/Sidebar.h"
 
 class CityScreen : public Screen {
 public:
     CityScreen(AppContext context, GameState& state, DBManager& db_manager);
 
     void handleEvent(const sf::Event& e) override;
-    void update(float) override;
+    void update(float dt) override;
     void draw(sf::RenderTarget& target) override;
 
 private:
@@ -31,9 +30,8 @@ private:
 
     Sidebar sidebar_;
     sf::Text title_text_;
-    sf::Text result_text_;
 
-    Button food_button_;
+    Button foodshop_button_;
     Button workshop_button_;
     Button bank_button_;
     Button back_button_;

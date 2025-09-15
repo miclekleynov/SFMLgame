@@ -7,22 +7,22 @@
 
 #pragma once
 #include <optional>
+#include <vector>
 #include <SFML/Graphics.hpp>
 #include "core/Screen.h"
-#include "core/GameState.h"
 #include "core/ScreenManager.h"
+#include "core/GameState.h"
 #include "resources/DBManager.h"
 #include "resources/Fonts.h"
-#include "ui/Sidebar.h"
-#include "ui/UiUtils.h"
 #include "ui/Button.h"
+#include "ui/Sidebar.h"
 
 class BankScreen : public Screen {
 public:
     BankScreen(AppContext context, GameState& state, DBManager& db_manager);
 
     void handleEvent(const sf::Event& e) override;
-    void update(float) override;
+    void update(float dt) override;
     void draw(sf::RenderTarget& target) override;
 
 private:
@@ -33,13 +33,10 @@ private:
     sf::Text title_text_;
     sf::Text result_text_;
 
-    Button loan100_button_;
-    Button loan1000_button_;
+    std::vector<Button> option_buttons_;
     Button back_button_;
 
     std::optional<ScreenID> pending_switch_;
-
-    void take_loan(int amount, const char* phrase);
 };
 
 
