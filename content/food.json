@@ -1,0 +1,20 @@
+﻿{
+  "1": {
+    "name": "Light Snack",
+    "description": "A quick snack, will satisfy hunger for a short time",
+    "cost": 5,
+    "stamina_recovery": 5
+  },
+  "2": {
+    "name": "Energy Bar",
+    "description": "Small but nutritious. A quick way to restore energy",
+    "cost": 15,
+    "stamina_recovery": 20
+  },
+  "3": {
+    "name": "Full Meal",
+    "description": "A hearty dish, will restore strength for a long time",
+    "cost": 50,
+    "stamina_recovery": 100
+  }
+}

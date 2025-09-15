@@ -1,0 +1,32 @@
+{
+    "collection": [],
+    "event_progress": {
+        "Antarctica": [
+            2,
+            0,
+            3,
+            1,
+            4
+        ],
+        "Desert": [
+            2,
+            3,
+            1,
+            0,
+            4
+        ]
+    },
+    "money": 3680,
+    "stamina": 10,
+    "tools": {
+        "0": {
+            "cur_dur": 40
+        },
+        "1": {
+            "cur_dur": 80
+        },
+        "2": {
+            "cur_dur": 5
+        }
+    }
+}
